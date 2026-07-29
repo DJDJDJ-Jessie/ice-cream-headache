@@ -2,7 +2,6 @@ const stage = document.getElementById("pet-stage");
 const bubble = document.getElementById("bubble");
 const interactionLayer = document.getElementById("interaction-layer");
 const ruffle = window.RufflePlayer.newest();
-const player = ruffle.createPlayer();
 const desktop = window.qqPetDesktop;
 
 const actions = {
@@ -36,6 +35,15 @@ const actions = {
   death: ["/Penguin/GG/other/si0.swf", "/Penguin/GG/other/si1.swf"],
 };
 
+const statusLabels = {
+  hunger: "\u9965\u997f",
+  clean: "\u6e05\u6d01",
+  mood: "\u5fc3\u60c5",
+  health: "\u5065\u5eb7",
+  level: "\u7b49\u7ea7",
+  coins: "\u5143\u5b9d",
+};
+
 const defaultState = {
   hunger: 72,
   clean: 68,
@@ -47,20 +55,25 @@ const defaultState = {
   lastTickAt: Date.now(),
 };
 
-let state = loadState();
-let currentGroup = "idle";
+const players = [createPlayer(), createPlayer()];
+let activePlayerIndex = 0;
 let actionIndex = 0;
+let transitionToken = 0;
 let bubbleTimer;
 let actionTimer;
 let autoWalkTimer;
 let decayTimer;
 let dragging = false;
 let pointer = null;
+let state = loadState();
 
-player.style.width = "230px";
-player.style.height = "275px";
-player.style.background = "transparent";
-stage.appendChild(player);
+function createPlayer() {
+  const player = ruffle.createPlayer();
+  player.classList.add("player-layer");
+  player.style.background = "transparent";
+  stage.appendChild(player);
+  return player;
+}
 
 function loadState() {
   try {
@@ -78,24 +91,60 @@ function clamp(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function showBubble(message, duration = 3200) {
+function showBubble(message, duration = 3600) {
   window.clearTimeout(bubbleTimer);
   bubble.textContent = message;
   bubble.hidden = false;
-  bubbleTimer = window.setTimeout(() => {
-    bubble.hidden = true;
-  }, duration);
+  bubbleTimer = window.setTimeout(hideBubble, duration);
+}
+
+function hideBubble() {
+  window.clearTimeout(bubbleTimer);
+  bubble.hidden = true;
+  bubble.textContent = "";
 }
 
 function currentStatusMessage() {
-  return `饥饿 ${state.hunger}  清洁 ${state.clean}  心情 ${state.mood}  健康 ${state.health}  等级 ${state.level}  元宝 ${state.coins}`;
+  return [
+    `${statusLabels.hunger} ${state.hunger}`,
+    `${statusLabels.clean} ${state.clean}`,
+    `${statusLabels.mood} ${state.mood}`,
+    `${statusLabels.health} ${state.health}`,
+    `${statusLabels.level} ${state.level}`,
+    `${statusLabels.coins} ${state.coins}`,
+  ].join("  ");
 }
 
-function playAction(group, options = {}) {
+function chooseAction(group, options = {}) {
   const list = actions[group] || actions.idle;
-  currentGroup = group;
   actionIndex = options.random ? Math.floor(Math.random() * list.length) : (actionIndex + 1) % list.length;
-  player.load(list[actionIndex]);
+  return list[actionIndex];
+}
+
+async function playAction(group, options = {}) {
+  const nextSource = chooseAction(group, options);
+  const token = ++transitionToken;
+  const currentPlayer = players[activePlayerIndex];
+  const nextPlayerIndex = activePlayerIndex === 0 ? 1 : 0;
+  const nextPlayer = players[nextPlayerIndex];
+
+  nextPlayer.classList.remove("is-active");
+  nextPlayer.classList.add("is-buffering");
+
+  try {
+    await nextPlayer.load(nextSource);
+  } catch {
+    return;
+  }
+
+  if (token !== transitionToken) {
+    return;
+  }
+
+  nextPlayer.classList.remove("is-buffering");
+  nextPlayer.classList.add("is-active");
+  currentPlayer.classList.remove("is-active");
+  activePlayerIndex = nextPlayerIndex;
 }
 
 function returnToIdle(delay = 3600) {
@@ -113,13 +162,11 @@ function updateCondition() {
 
   if (state.health <= 0) {
     playAction("death", { random: true });
-    showBubble("我已经没有力气了...");
     return;
   }
 
   if (state.health < 30) {
     playAction("sick", { random: true });
-    showBubble("我好像生病了。");
   }
 }
 
@@ -132,7 +179,6 @@ function maybeLevelUp() {
   state.level += 1;
   state.coins += 80;
   playAction("levelUp", { random: true });
-  showBubble(`升级啦！现在是 ${state.level} 级。`, 4200);
 }
 
 function tickState() {
@@ -151,15 +197,10 @@ function tickState() {
   updateCondition();
   maybeLevelUp();
   saveState();
-
-  if (state.hunger < 25 || state.clean < 25 || state.mood < 25) {
-    showBubble("主人，我需要照顾一下。");
-  }
 }
 
 function feed() {
   if (state.coins < 10) {
-    showBubble("元宝不够啦，先去打工吧。");
     return;
   }
 
@@ -169,13 +210,11 @@ function feed() {
   state.coins = Math.max(0, state.coins - 10);
   saveState();
   playAction("eat", { random: true });
-  showBubble("好吃！谢谢主人。");
   returnToIdle();
 }
 
 function drink() {
   if (state.coins < 6) {
-    showBubble("元宝不够，喝不起饮料啦。");
     return;
   }
 
@@ -185,7 +224,6 @@ function drink() {
   state.coins = Math.max(0, state.coins - 6);
   saveState();
   playAction("drink", { random: true });
-  showBubble("咕噜咕噜，舒服多了。");
   returnToIdle();
 }
 
@@ -195,7 +233,6 @@ function cleanPet() {
   state.health = clamp(state.health + 2);
   saveState();
   playAction("clean", { random: true });
-  showBubble("洗香香了。");
   returnToIdle(5200);
 }
 
@@ -204,7 +241,6 @@ function playWithPet() {
   state.hunger = clamp(state.hunger - 5);
   saveState();
   playAction("play", { random: true });
-  showBubble("再玩一次嘛！");
   returnToIdle();
 }
 
@@ -216,7 +252,6 @@ function study() {
   maybeLevelUp();
   saveState();
   playAction("study", { random: true });
-  showBubble("学习中，变聪明一点。");
   returnToIdle(5600);
 }
 
@@ -229,18 +264,11 @@ function work() {
   maybeLevelUp();
   saveState();
   playAction("work", { random: true });
-  showBubble("打工回来，赚到 35 元宝。");
   returnToIdle(5600);
 }
 
 function medicine() {
-  if (state.health >= 80) {
-    showBubble("我现在很健康，不用吃药。");
-    return;
-  }
-
-  if (state.coins < 20) {
-    showBubble("买药需要 20 元宝。");
+  if (state.health >= 80 || state.coins < 20) {
     return;
   }
 
@@ -249,7 +277,6 @@ function medicine() {
   state.mood = clamp(state.mood - 4);
   saveState();
   playAction("drink", { random: true });
-  showBubble("药有点苦，但好多了。");
   returnToIdle();
 }
 
@@ -278,10 +305,10 @@ function startDrag(event) {
     return;
   }
 
+  hideBubble();
   dragging = true;
   pointer = { x: event.screenX, y: event.screenY };
   playAction("drag", { random: true });
-  showBubble("轻一点，轻一点。", 1800);
   interactionLayer.setPointerCapture(event.pointerId);
 }
 
@@ -344,13 +371,13 @@ interactionLayer.addEventListener("contextmenu", (event) => {
 desktop.onCommand(handleCommand);
 
 tickState();
-playAction(currentGroup, { random: true });
-showBubble("我来啦。");
+playAction("idle", { random: true });
 autoWalkTimer = window.setInterval(autoWalk, 9000);
 decayTimer = window.setInterval(tickState, 60000);
 
 window.addEventListener("beforeunload", () => {
   window.clearInterval(autoWalkTimer);
   window.clearInterval(decayTimer);
+  window.clearTimeout(actionTimer);
   saveState();
 });
