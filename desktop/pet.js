@@ -5,12 +5,7 @@ const ruffle = window.RufflePlayer.newest();
 const desktop = window.qqPetDesktop;
 
 const actions = {
-  idle: [
-    "/Penguin/GG/chang/1.swf",
-    "/Penguin/GG/chang/2.swf",
-    "/Penguin/GG/chang/3.swf",
-    "/Penguin/GG/chang/4.swf",
-  ],
+  idle: ["/Penguin/GG/chang/1.swf"],
   walk: [
     "/Penguin/GG/chang/5.swf",
     "/Penguin/GG/chang/6.swf",
@@ -56,12 +51,13 @@ const defaultState = {
 };
 
 const players = [createPlayer(), createPlayer()];
+const verifiedIdleOptions = { random: false };
 let activePlayerIndex = 0;
 let actionIndex = 0;
 let transitionToken = 0;
 let bubbleTimer;
 let actionTimer;
-let autoWalkTimer;
+let autoWalkTimer = null;
 let decayTimer;
 let dragging = false;
 let pointer = null;
@@ -71,8 +67,49 @@ function createPlayer() {
   const player = ruffle.createPlayer();
   player.classList.add("player-layer");
   player.style.background = "transparent";
+  player.style.setProperty("--logo-display", "none");
+  player.style.setProperty("--preloader-background", "transparent");
   stage.appendChild(player);
+  suppressRuffleChrome(player);
   return player;
+}
+
+function suppressRuffleChrome(player) {
+  const hideChrome = () => {
+    if (!player.shadowRoot) {
+      return false;
+    }
+
+    if (!player.shadowRoot.querySelector("#qqpet-ruffle-chrome-fix")) {
+      const style = document.createElement("style");
+      style.id = "qqpet-ruffle-chrome-fix";
+      style.textContent = `
+        #preloader,
+        #play_button,
+        #unmute_overlay,
+        #message_overlay {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+        }
+
+        #container.hidden {
+          display: block !important;
+        }
+      `;
+      player.shadowRoot.appendChild(style);
+    }
+
+    return true;
+  };
+
+  let attempts = 0;
+  const timer = window.setInterval(() => {
+    attempts += 1;
+    if (hideChrome() || attempts > 40) {
+      window.clearInterval(timer);
+    }
+  }, 50);
 }
 
 function loadState() {
@@ -133,6 +170,8 @@ async function playAction(group, options = {}) {
 
   try {
     await nextPlayer.load(nextSource);
+    suppressRuffleChrome(nextPlayer);
+    await waitForRuffleFrame(nextPlayer);
   } catch {
     return;
   }
@@ -145,6 +184,28 @@ async function playAction(group, options = {}) {
   nextPlayer.classList.add("is-active");
   currentPlayer.classList.remove("is-active");
   activePlayerIndex = nextPlayerIndex;
+}
+
+function waitForRuffleFrame(player) {
+  return new Promise((resolve) => {
+    const startedAt = performance.now();
+    const settleMs = 220;
+    const maxWaitMs = 900;
+
+    const check = () => {
+      const elapsed = performance.now() - startedAt;
+      const hasCanvas = Boolean(player.shadowRoot?.querySelector("canvas"));
+
+      if ((hasCanvas && elapsed >= settleMs) || elapsed >= maxWaitMs) {
+        resolve();
+        return;
+      }
+
+      window.requestAnimationFrame(check);
+    };
+
+    check();
+  });
 }
 
 function returnToIdle(delay = 3600) {
@@ -338,7 +399,7 @@ function endDrag(event) {
 
 function autoWalk() {
   if (dragging || Math.random() < 0.45) {
-    playAction("idle", { random: true });
+    playAction("idle", verifiedIdleOptions);
     return;
   }
 
@@ -353,7 +414,7 @@ function autoWalk() {
 
     if (moved >= steps) {
       window.clearInterval(walkTimer);
-      playAction("idle", { random: true });
+      playAction("idle", verifiedIdleOptions);
     }
   }, 110);
 }
@@ -371,12 +432,13 @@ interactionLayer.addEventListener("contextmenu", (event) => {
 desktop.onCommand(handleCommand);
 
 tickState();
-playAction("idle", { random: true });
-autoWalkTimer = window.setInterval(autoWalk, 9000);
+playAction("idle", verifiedIdleOptions);
 decayTimer = window.setInterval(tickState, 60000);
 
 window.addEventListener("beforeunload", () => {
-  window.clearInterval(autoWalkTimer);
+  if (autoWalkTimer) {
+    window.clearInterval(autoWalkTimer);
+  }
   window.clearInterval(decayTimer);
   window.clearTimeout(actionTimer);
   saveState();
