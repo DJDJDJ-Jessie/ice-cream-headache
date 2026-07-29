@@ -8,11 +8,11 @@ body {
 }
 
 body {
-  -webkit-app-region: drag;
   user-select: none;
 }
 
 .pet-shell {
+  position: relative;
   width: 100%;
   height: 100%;
   display: grid;
@@ -21,19 +21,60 @@ body {
 }
 
 .pet-stage {
-  width: 220px;
-  height: 260px;
+  width: 230px;
+  height: 275px;
   display: grid;
   place-items: center;
   background: transparent;
+  pointer-events: none;
 }
 
 ruffle-player,
 object,
 embed {
-  width: 220px;
-  height: 260px;
+  width: 230px;
+  height: 275px;
   background: transparent;
   border: 0;
   outline: 0;
+}
+
+.interaction-layer {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+.interaction-layer:active {
+  cursor: grabbing;
+}
+
+.bubble {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 8px;
+  min-height: 28px;
+  padding: 8px 12px;
+  color: #203147;
+  font: 13px/1.35 "Microsoft YaHei", "Segoe UI", sans-serif;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(32, 49, 71, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  border-right: 1px solid rgba(32, 49, 71, 0.2);
+  border-bottom: 1px solid rgba(32, 49, 71, 0.2);
+  transform: translateX(-50%) rotate(45deg);
 }

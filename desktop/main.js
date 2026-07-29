@@ -1,7 +1,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
-const { app, BrowserWindow, Menu, Tray } = require("electron");
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen } = require("electron");
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -18,6 +18,7 @@ const MIME_TYPES = {
 let tray;
 let staticServer;
 let petWindow;
+let actionViewerWindow;
 
 function getAssetRoot() {
   return path.resolve(__dirname, "..");
@@ -73,32 +74,99 @@ function listen(server) {
   });
 }
 
+function statePath() {
+  return path.join(app.getPath("userData"), "window-state.json");
+}
+
+function getSavedBounds() {
+  try {
+    return JSON.parse(fs.readFileSync(statePath(), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function saveBounds(bounds) {
+  fs.mkdirSync(path.dirname(statePath()), { recursive: true });
+  fs.writeFileSync(statePath(), JSON.stringify(bounds, null, 2));
+}
+
+function clampBounds(bounds) {
+  const display = screen.getDisplayMatching(bounds);
+  const area = display.workArea;
+  const width = bounds.width || 280;
+  const height = bounds.height || 340;
+  const x = Math.min(Math.max(bounds.x, area.x), area.x + area.width - width);
+  const y = Math.min(Math.max(bounds.y, area.y), area.y + area.height - height);
+  return { ...bounds, width, height, x, y };
+}
+
+function sendPetCommand(command) {
+  if (petWindow) {
+    petWindow.webContents.send("pet:command", command);
+  }
+}
+
 function createTray(iconPath) {
   tray = new Tray(iconPath);
   tray.setToolTip("QQ Penguin");
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
-        label: "显示企鹅",
+        label: "Show Penguin",
         click: () => {
-          if (petWindow) {
-            petWindow.show();
-            petWindow.focus();
-          }
+          petWindow?.show();
+          petWindow?.focus();
         },
       },
       {
-        label: "隐藏企鹅",
-        click: () => {
-          if (petWindow) {
-            petWindow.hide();
-          }
-        },
+        label: "Hide Penguin",
+        click: () => petWindow?.hide(),
       },
       { type: "separator" },
-      { label: "退出", click: () => app.quit() },
+      { label: "Quit", click: () => app.quit() },
     ]),
   );
+}
+
+function showPetMenu() {
+  Menu.buildFromTemplate([
+    { label: "Feed", click: () => sendPetCommand("feed") },
+    { label: "Clean", click: () => sendPetCommand("clean") },
+    { label: "Play", click: () => sendPetCommand("play") },
+    { type: "separator" },
+    { label: "Status", click: () => sendPetCommand("status") },
+    { label: "Hide", click: () => petWindow?.hide() },
+    { type: "separator" },
+    { label: "Quit", click: () => app.quit() },
+  ]).popup({ window: petWindow });
+}
+
+function registerIpc() {
+  ipcMain.handle("pet:move-by", (_event, delta) => {
+    if (!petWindow) {
+      return null;
+    }
+
+    const bounds = petWindow.getBounds();
+    const nextBounds = clampBounds({
+      ...bounds,
+      x: bounds.x + Math.round(delta.x || 0),
+      y: bounds.y + Math.round(delta.y || 0),
+    });
+    petWindow.setBounds(nextBounds);
+    saveBounds(nextBounds);
+    return nextBounds;
+  });
+
+  ipcMain.handle("pet:get-bounds", () => ({
+    window: petWindow?.getBounds(),
+    workArea: screen.getPrimaryDisplay().workArea,
+  }));
+
+  ipcMain.handle("pet:show-menu", () => {
+    showPetMenu();
+  });
 }
 
 async function createPetWindow() {
@@ -110,13 +178,17 @@ async function createPetWindow() {
 
   createTray(iconPath);
 
-  const { width, height } = require("electron").screen.getPrimaryDisplay().workAreaSize;
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const defaultBounds = {
+    width: 280,
+    height: 340,
+    x: Math.max(0, width - 330),
+    y: Math.max(0, height - 390),
+  };
+  const initialBounds = clampBounds(getSavedBounds() || defaultBounds);
 
   petWindow = new BrowserWindow({
-    width: 260,
-    height: 300,
-    x: Math.max(0, width - 310),
-    y: Math.max(0, height - 350),
+    ...initialBounds,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -127,18 +199,50 @@ async function createPetWindow() {
     backgroundColor: "#00000000",
     icon: iconPath,
     webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  petWindow.setAlwaysOnTop(true, "screen-saver");
+  petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  petWindow.on("moved", () => saveBounds(petWindow.getBounds()));
+  await petWindow.loadURL(`http://127.0.0.1:${port}/desktop/pet.html`);
+}
+
+async function createActionViewerWindow() {
+  const assetRoot = getAssetRoot();
+  staticServer = createStaticServer(assetRoot);
+  const port = await listen(staticServer);
+
+  actionViewerWindow = new BrowserWindow({
+    width: 960,
+    height: 720,
+    minWidth: 760,
+    minHeight: 560,
+    title: "QQ Penguin Action Viewer",
+    backgroundColor: "#f4f7fb",
+    webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
     },
   });
 
-  petWindow.setAlwaysOnTop(true, "screen-saver");
-  petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  await petWindow.loadURL(`http://127.0.0.1:${port}/desktop/pet.html`);
+  await actionViewerWindow.loadURL(`http://127.0.0.1:${port}/desktop/action-viewer.html`);
 }
 
-app.whenReady().then(createPetWindow);
+app.whenReady().then(() => {
+  if (process.argv.includes("--actions")) {
+    createActionViewerWindow();
+    return;
+  }
+
+  registerIpc();
+  createPetWindow();
+});
 
 app.on("window-all-closed", () => {
   if (staticServer) {

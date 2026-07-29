@@ -14,6 +14,39 @@
 - 不显示任务栏按钮
 - 托盘菜单可隐藏、显示、退出
 - 直接加载 `Penguin/GG` 下的企鹅 SWF 动作
+- 右键企鹅可喂食、清洁、陪玩、查看状态
+- 双击企鹅可查看当前状态
+- 企鹅位置会保存到本地
+- 饥饿、清洁、心情、元宝会保存到本地
+- 企鹅会随机在桌面上短距离走动
+
+## Current Commands
+
+Run the desktop pet:
+
+```powershell
+npm run start:pet
+```
+
+Open the SWF action viewer:
+
+```powershell
+npm run view:actions
+```
+
+Build Windows executables:
+
+```powershell
+npm run build:win
+```
+
+Build outputs:
+
+```text
+dist/QQ Penguin 0.1.0.exe
+dist/QQ Penguin Setup 0.1.0.exe
+dist/win-unpacked/QQ Penguin.exe
+```
 
 ## 需要复刻的核心体验
 

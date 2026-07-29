@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QQ Penguin Action Viewer</title>
+    <link rel="stylesheet" href="/desktop/action-viewer.css" />
+    <script>
+      window.RufflePlayer = window.RufflePlayer || {};
+      window.RufflePlayer.config = {
+        autoplay: "on",
+        backgroundColor: null,
+        letterbox: "off",
+        scale: "showAll",
+        wmode: "transparent",
+      };
+    </script>
+    <script src="/Ruffle/ruffle.js"></script>
+    <script src="/desktop/actions.js"></script>
+  </head>
+  <body>
+    <aside class="rail">
+      <h1>QQ Penguin Actions</h1>
+      <div id="group-list" class="group-list"></div>
+    </aside>
+    <main class="viewer">
+      <section class="stage-wrap">
+        <div id="stage" class="stage"></div>
+      </section>
+      <section class="meta">
+        <strong id="file-name"></strong>
+        <span id="note"></span>
+      </section>
+    </main>
+    <script src="/desktop/action-viewer.js"></script>
+  </body>
+</html>

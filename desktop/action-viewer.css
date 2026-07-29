@@ -1,0 +1,101 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  color: #1c2733;
+  background: #f4f7fb;
+  font: 14px/1.4 "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+.rail {
+  overflow: auto;
+  padding: 18px 14px;
+  background: #ffffff;
+  border-right: 1px solid #d9e2ec;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.group-title {
+  margin: 18px 4px 8px;
+  color: #536475;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.action-button {
+  width: 100%;
+  min-height: 36px;
+  margin: 2px 0;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #1c2733;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.action-button:hover,
+.action-button.active {
+  border-color: #b8c8d9;
+  background: #edf4fb;
+}
+
+.viewer {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 24px;
+}
+
+.stage-wrap {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(45deg, #d9e2ec 25%, transparent 25%),
+    linear-gradient(-45deg, #d9e2ec 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d9e2ec 75%),
+    linear-gradient(-45deg, transparent 75%, #d9e2ec 75%);
+  background-color: #f9fbfd;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+  background-size: 20px 20px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+}
+
+.stage,
+ruffle-player,
+object,
+embed {
+  width: 360px;
+  height: 360px;
+}
+
+.meta {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-height: 52px;
+  color: #536475;
+}
+
+#file-name {
+  color: #1c2733;
+}

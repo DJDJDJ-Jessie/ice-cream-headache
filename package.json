@@ -6,6 +6,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "start:pet": "electron .",
+    "view:actions": "electron . --actions",
     "build:win": "electron-builder --win --x64"
   },
   "build": {
