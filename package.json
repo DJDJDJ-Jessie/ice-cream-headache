@@ -7,6 +7,7 @@
   "scripts": {
     "start:pet": "electron .",
     "view:actions": "electron . --actions",
+    "build:exe": "electron-builder --win portable --x64",
     "build:win": "electron-builder --win --x64"
   },
   "build": {
@@ -25,7 +26,8 @@
         "portable",
         "nsis"
       ],
-      "icon": "desktop/assets/icon.png"
+      "icon": "desktop/assets/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },
   "devDependencies": {

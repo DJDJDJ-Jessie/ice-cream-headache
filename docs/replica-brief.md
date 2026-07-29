@@ -40,6 +40,12 @@ Build Windows executables:
 npm run build:win
 ```
 
+Build only the portable `.exe`:
+
+```powershell
+npm run build:exe
+```
+
 Build outputs:
 
 ```text

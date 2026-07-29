@@ -113,32 +113,37 @@ function createTray(iconPath) {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
-        label: "Show Penguin",
+        label: "显示企鹅",
         click: () => {
           petWindow?.show();
           petWindow?.focus();
         },
       },
       {
-        label: "Hide Penguin",
+        label: "隐藏企鹅",
         click: () => petWindow?.hide(),
       },
       { type: "separator" },
-      { label: "Quit", click: () => app.quit() },
+      { label: "退出", click: () => app.quit() },
     ]),
   );
 }
 
 function showPetMenu() {
   Menu.buildFromTemplate([
-    { label: "Feed", click: () => sendPetCommand("feed") },
-    { label: "Clean", click: () => sendPetCommand("clean") },
-    { label: "Play", click: () => sendPetCommand("play") },
+    { label: "喂食", click: () => sendPetCommand("feed") },
+    { label: "喝水", click: () => sendPetCommand("drink") },
+    { label: "清洁", click: () => sendPetCommand("clean") },
+    { label: "逗宠", click: () => sendPetCommand("play") },
     { type: "separator" },
-    { label: "Status", click: () => sendPetCommand("status") },
-    { label: "Hide", click: () => petWindow?.hide() },
+    { label: "学习", click: () => sendPetCommand("study") },
+    { label: "打工", click: () => sendPetCommand("work") },
+    { label: "吃药", click: () => sendPetCommand("medicine") },
     { type: "separator" },
-    { label: "Quit", click: () => app.quit() },
+    { label: "状态", click: () => sendPetCommand("status") },
+    { label: "隐藏", click: () => petWindow?.hide() },
+    { type: "separator" },
+    { label: "退出", click: () => app.quit() },
   ]).popup({ window: petWindow });
 }
 
