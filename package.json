@@ -1,0 +1,34 @@
+{
+  "name": "qqpet-native-penguin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native desktop QQ Penguin recreation for Windows 10 and Windows 11.",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start:pet": "electron .",
+    "build:win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "local.qqpet.native-penguin",
+    "productName": "QQ Penguin",
+    "files": [
+      "desktop/**/*",
+      "Penguin/**/*",
+      "Ruffle/**/*",
+      "static/media/**/*",
+      "favicon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "desktop/assets/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
+  }
+}
