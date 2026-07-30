@@ -4,6 +4,11 @@ Current branch: `codex/native-qq-penguin`
 
 This is still an early reconstruction. The current build is a native Windows desktop-pet foundation, not a complete 1:1 QQ Pet recreation.
 
+Primary planning docs:
+
+- Product direction: `docs/product-document.md`
+- Development plan: `docs/development-document.md`
+
 ## Current Status
 
 | Area | Progress | Notes |
@@ -18,6 +23,10 @@ This is still an early reconstruction. The current build is a native Windows des
 | Original QQ Pet UI | 5% | Not recreated yet. |
 | Original gameplay rules | 10% | Current stats are placeholders. |
 | Overall 1:1 restoration | 18% | Foundation is usable, accuracy work has only started. |
+
+## Direction Lock
+
+From now on, implementation should follow the product and development docs first. If a feature conflicts with those documents, stop and update the plan before coding.
 
 ## Fixed Since Last Progress Note
 

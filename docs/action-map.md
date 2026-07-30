@@ -6,7 +6,7 @@ This is the working map for the desktop penguin recreation. File names alone are
 
 | Behavior | Files |
 | --- | --- |
-| Idle | `Penguin/GG/chang/1.swf`, `2.swf`, `3.swf`, `4.swf` |
+| Idle | `Penguin/GG/chang/1.swf` |
 | Walk | `Penguin/GG/chang/5.swf`, `6.swf`, `7.swf`, `8.swf` |
 | Feed | `Penguin/GG/e/chi1.swf`, `chi2.swf`, `chi3.swf` |
 | Drink / medicine | `Penguin/GG/e/he1.swf`, `he2.swf`, `he3.swf` |
@@ -24,7 +24,7 @@ This is the working map for the desktop penguin recreation. File names alone are
 
 | Folder | Files | Likely Meaning |
 | --- | --- | --- |
-| `Penguin/GG/chang` | `9.swf`, `10.swf`, `11.swf`, `12.swf`, `ok.swf` | movement, confirm |
+| `Penguin/GG/chang` | `2.swf`, `3.swf`, `4.swf`, `9.swf`, `10.swf`, `11.swf`, `12.swf`, `ok.swf` | idle variants, movement, confirm |
 | `Penguin/GG/other` | `lai3.swf`, `qu0.swf`, `qu1.swf` | come/go |
 | `Penguin/GG/xinqing` | `a-fix.swf` | mood |
 | `Penguin/GG/zt` | `a-fix.swf`, `e.swf`, `yang.swf` | status variants |
